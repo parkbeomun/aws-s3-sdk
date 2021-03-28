@@ -11,9 +11,12 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 //@TODO  No content length specified for stream data.  Stream contents will be buffered in memory and could result in out of memory errors. 에러체크
 
@@ -26,6 +29,9 @@ public class HighLevelMultipartUploadByInputStream {
         String filePath = "";
 
         try {
+
+
+
             AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                     .withRegion(clientRegion)
                     .withCredentials(new ProfileCredentialsProvider())
@@ -35,11 +41,11 @@ public class HighLevelMultipartUploadByInputStream {
                     .build();
 
             File file = new File(filePath);
-            String name = file.getName();
-            InputStream is = new FileInputStream(file);
+            byte[] bytes = Files.readAllBytes(file.toPath());
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentType(getMediaTypeByFileName(file.getName()));
-            Upload upload = tm.upload(bucketName, keyName, is, objectMetadata);
+            objectMetadata.setContentLength(bytes.length);
+            Upload upload = tm.upload(bucketName, keyName, new ByteArrayInputStream(bytes), objectMetadata);
 
             System.out.println("Object upload started");
 
